@@ -1,0 +1,839 @@
+[
+  {
+    "replay_hero": "HeroDVaMech",
+    "display_name": "D.Va",
+    "aliases": [
+      "dva",
+      "дива",
+      "d.va",
+      "два"
+    ],
+    "orderable": true
+  },
+  {
+    "replay_hero": "HeroL90ETC",
+    "display_name": "E.T.C.",
+    "aliases": [
+      "etc",
+      "етс",
+      "e.t.c.",
+      "корова",
+      "коровка"
+    ],
+    "orderable": true
+  },
+  {
+    "replay_hero": "HeroAbathur",
+    "display_name": "Абатур",
+    "aliases": [
+      "abathur",
+      "аба"
+    ],
+    "orderable": true
+  },
+  {
+    "replay_hero": "HeroAzmodan",
+    "display_name": "Азмодан",
+    "aliases": [
+      "azmodan",
+      "азмо"
+    ],
+    "orderable": true
+  },
+  {
+    "replay_hero": "HeroAlarak",
+    "display_name": "Аларак",
+    "aliases": [
+      "alarak"
+    ],
+    "orderable": true
+  },
+  {
+    "replay_hero": "HeroAlexstrasza",
+    "display_name": "Алекстраза",
+    "aliases": [
+      "alexstrasza",
+      "алекс"
+    ],
+    "orderable": true
+  },
+  {
+    "replay_hero": "HeroAna",
+    "display_name": "Ана",
+    "aliases": [
+      "ana",
+      "бабка"
+    ],
+    "orderable": true
+  },
+  {
+    "replay_hero": "HeroAnduin",
+    "display_name": "Андуин",
+    "aliases": [
+      "anduin",
+      "сын"
+    ],
+    "orderable": true
+  },
+  {
+    "replay_hero": "HeroAnubarak",
+    "display_name": "Ануб'арак",
+    "aliases": [
+      "anub'arak",
+      "anubarak",
+      "анубарак",
+      "жук"
+    ],
+    "orderable": true
+  },
+  {
+    "replay_hero": "HeroArtanis",
+    "display_name": "Артанис",
+    "aliases": [
+      "artanis"
+    ],
+    "orderable": true
+  },
+  {
+    "replay_hero": "HeroArthas",
+    "display_name": "Артас",
+    "aliases": [
+      "arthas"
+    ],
+    "orderable": true
+  },
+  {
+    "replay_hero": "HeroAuriel",
+    "display_name": "Ауриэль",
+    "aliases": [
+      "auriel",
+      "Ауриель"
+    ],
+    "orderable": true
+  },
+  {
+    "replay_hero": "HeroFirebat",
+    "display_name": "Блэйз",
+    "aliases": [
+      "blaze"
+    ],
+    "orderable": true
+  },
+  {
+    "replay_hero": "HeroWhitemane",
+    "display_name": "Вайтмейн",
+    "aliases": [
+      "whitemane"
+    ],
+    "orderable": true
+  },
+  {
+    "replay_hero": "HeroValeera",
+    "display_name": "Валира",
+    "aliases": [
+      "valeera"
+    ],
+    "orderable": true
+  },
+  {
+    "replay_hero": "HeroDemonHunter",
+    "display_name": "Валла",
+    "aliases": [
+      "valla",
+      "вава"
+    ],
+    "orderable": true
+  },
+  {
+    "replay_hero": "HeroVarian",
+    "display_name": "Вариан",
+    "aliases": [
+      "varian",
+      "отец"
+    ],
+    "orderable": true
+  },
+  {
+    "replay_hero": "HeroTinker",
+    "display_name": "Газлоу",
+    "aliases": [
+      "gazlowe",
+      "газлорд"
+    ],
+    "orderable": true
+  },
+  {
+    "replay_hero": "HeroGall",
+    "display_name": "Галл",
+    "aliases": [
+      "gall"
+    ],
+    "orderable": true
+  },
+  {
+    "replay_hero": "HeroGarrosh",
+    "display_name": "Гаррош",
+    "aliases": [
+      "garrosh"
+    ],
+    "orderable": true
+  },
+  {
+    "replay_hero": "HeroGuldan",
+    "display_name": "Гул'дан",
+    "aliases": [
+      "gul'dan",
+      "guldan",
+      "гулдан"
+    ],
+    "orderable": true
+  },
+  {
+    "replay_hero": "HeroGenji",
+    "display_name": "Гэндзи",
+    "aliases": [
+      "genji",
+      "генга",
+      "гензи",
+      "гендзи"
+    ],
+    "orderable": true
+  },
+  {
+    "replay_hero": "HeroDeckard",
+    "display_name": "Декард",
+    "aliases": [
+      "каин",
+      "deckard",
+      "дед"
+    ],
+    "orderable": true
+  },
+  {
+    "replay_hero": "HeroDehaka",
+    "display_name": "Дехака",
+    "aliases": [
+      "dehaka",
+      "динозавр",
+      "крокодил"
+    ],
+    "orderable": true
+  },
+  {
+    "replay_hero": "HeroJaina",
+    "display_name": "Джайна",
+    "aliases": [
+      "jaina"
+    ],
+    "orderable": true
+  },
+  {
+    "replay_hero": "HeroCrusader",
+    "display_name": "Джоанна",
+    "aliases": [
+      "johanna",
+      "джоха"
+    ],
+    "orderable": true
+  },
+  {
+    "replay_hero": "HeroDiablo",
+    "display_name": "Диабло",
+    "aliases": [
+      "diablo",
+      "дибла"
+    ],
+    "orderable": true
+  },
+  {
+    "replay_hero": "HeroHogger",
+    "display_name": "Дробитель",
+    "aliases": [
+      "hogger",
+      "хоггер",
+      "ходжерс",
+      "банкич"
+    ],
+    "orderable": true
+  },
+  {
+    "replay_hero": "HeroZagara",
+    "display_name": "Загара",
+    "aliases": [
+      "zagara"
+    ],
+    "orderable": true
+  },
+  {
+    "replay_hero": "HeroZarya",
+    "display_name": "Заря",
+    "aliases": [
+      "zarya"
+    ],
+    "orderable": true
+  },
+  {
+    "replay_hero": "HeroZeratul",
+    "display_name": "Зератул",
+    "aliases": [
+      "zeratul",
+      "зера"
+    ],
+    "orderable": true
+  },
+  {
+    "replay_hero": "HeroNecromancer",
+    "display_name": "Зул",
+    "aliases": [
+      "zul",
+      "xul"
+    ],
+    "orderable": true
+  },
+  {
+    "replay_hero": "HeroZuljin",
+    "display_name": "Зул'джин",
+    "aliases": [
+      "зулджин",
+      "zuljin",
+      "zul'jin"
+    ],
+    "orderable": true
+  },
+  {
+    "replay_hero": "HeroIllidan",
+    "display_name": "Иллидан",
+    "aliases": [
+      "illidan"
+    ],
+    "orderable": true
+  },
+  {
+    "replay_hero": "HeroImperius",
+    "display_name": "Империй",
+    "aliases": [
+      "imperius",
+      "империус"
+    ],
+    "orderable": true
+  },
+  {
+    "replay_hero": "HeroYrel",
+    "display_name": "Ирель",
+    "aliases": [
+      "yrel"
+    ],
+    "orderable": true
+  },
+  {
+    "replay_hero": "HeroMonk",
+    "display_name": "Каразим",
+    "aliases": [
+      "kharazim"
+    ],
+    "orderable": true
+  },
+  {
+    "replay_hero": "HeroAmazon",
+    "display_name": "Кассия",
+    "aliases": [
+      "cassia"
+    ],
+    "orderable": true
+  },
+  {
+    "replay_hero": "HeroNexusHunter",
+    "display_name": "Кахира",
+    "aliases": [
+      "qhira",
+      "кширка"
+    ],
+    "orderable": true
+  },
+  {
+    "replay_hero": "HeroKelThuzad",
+    "display_name": "Кел'Тузад",
+    "aliases": [
+      "kel'thuzad",
+      "kelthuzad",
+      "келтузад",
+      "ктз"
+    ],
+    "orderable": true
+  },
+  {
+    "replay_hero": "HeroKaelthas",
+    "display_name": "Кель'тас",
+    "aliases": [
+      "кель",
+      "кельтас",
+      "kaelthas",
+      "kael'thas",
+      "кт"
+    ],
+    "orderable": true
+  },
+  {
+    "replay_hero": "HeroKerrigan",
+    "display_name": "Керриган",
+    "aliases": [
+      "kerrigan",
+      "керри"
+    ],
+    "orderable": true
+  },
+  {
+    "replay_hero": "HeroJunkrat",
+    "display_name": "Крысавчик",
+    "aliases": [
+      "junkrat",
+      "джанкрат"
+    ],
+    "orderable": true
+  },
+  {
+    "replay_hero": "HeroMedic",
+    "display_name": "Лейтенант Моралес",
+    "aliases": [
+      "lt morales",
+      "lt. morales",
+      "моралес",
+      "ltmorales"
+    ],
+    "orderable": true
+  },
+  {
+    "replay_hero": "HeroLeoric",
+    "display_name": "Леорик",
+    "aliases": [
+      "leoric"
+    ],
+    "orderable": true
+  },
+  {
+    "replay_hero": "HeroLiLi",
+    "display_name": "Ли Ли",
+    "aliases": [
+      "li li",
+      "лили",
+      "lili",
+      "мохнатка",
+      "лилиша"
+    ],
+    "orderable": true
+  },
+  {
+    "replay_hero": "HeroWizard",
+    "display_name": "Ли-Мин",
+    "aliases": [
+      "ли мин",
+      "лимин",
+      "лиминг",
+      "li-ming",
+      "минга",
+      "лимонка"
+    ],
+    "orderable": true
+  },
+  {
+    "replay_hero": "HeroDryad",
+    "display_name": "Лунара",
+    "aliases": [
+      "lunara",
+      "коза"
+    ],
+    "orderable": true
+  },
+  {
+    "replay_hero": "HeroLucio",
+    "display_name": "Лусио",
+    "aliases": [
+      "lucio",
+      "люцио",
+      "дантыч"
+    ],
+    "orderable": true
+  },
+  {
+    "replay_hero": "HeroMaiev",
+    "display_name": "Майев",
+    "aliases": [
+      "maiev"
+    ],
+    "orderable": true
+  },
+  {
+    "replay_hero": "HeroMalGanis",
+    "display_name": "Мал'Ганис",
+    "aliases": [
+      "mal'ganis",
+      "malganis",
+      "малганис"
+    ],
+    "orderable": true
+  },
+  {
+    "replay_hero": "HeroMalthael",
+    "display_name": "Малтаэль",
+    "aliases": [
+      "malthael",
+      "малт"
+    ],
+    "orderable": true
+  },
+  {
+    "replay_hero": "HeroMalfurion",
+    "display_name": "Малфурион",
+    "aliases": [
+      "malfurion",
+      "мал фурион",
+      "фурион",
+      "малф",
+      "пенек"
+    ],
+    "orderable": true
+  },
+  {
+    "replay_hero": "HeroMedivh",
+    "display_name": "Медив",
+    "aliases": [
+      "medivh"
+    ],
+    "orderable": true
+  },
+  {
+    "replay_hero": "HeroMephisto",
+    "display_name": "Мефисто",
+    "aliases": [
+      "mephisto"
+    ],
+    "orderable": true
+  },
+  {
+    "replay_hero": "HeroMuradin",
+    "display_name": "Мурадин",
+    "aliases": [
+      "muradin",
+      "мурадос",
+      "гномик",
+      "дворф"
+    ],
+    "orderable": true
+  },
+  {
+    "replay_hero": "HeroMurky",
+    "display_name": "Мурчаль",
+    "aliases": [
+      "murky",
+      "мурки",
+      "рыба"
+    ],
+    "orderable": true
+  },
+  {
+    "replay_hero": "HeroMeiOW",
+    "display_name": "Мэй",
+    "aliases": [
+      "mei",
+      "мей"
+    ],
+    "orderable": true
+  },
+  {
+    "replay_hero": "HeroButcher",
+    "display_name": "Мясник",
+    "aliases": [
+      "the butcher",
+      "батчер",
+      "thebutcher",
+      "мясо"
+    ],
+    "orderable": true
+  },
+  {
+    "replay_hero": "HeroWitchDoctor",
+    "display_name": "Назибо",
+    "aliases": [
+      "nazeebo"
+    ],
+    "orderable": true
+  },
+  {
+    "replay_hero": "HeroNova",
+    "display_name": "Нова",
+    "aliases": [
+      "nova"
+    ],
+    "orderable": true
+  },
+  {
+    "replay_hero": "HeroOrphea",
+    "display_name": "Орфея",
+    "aliases": [
+      "orphea"
+    ],
+    "orderable": true
+  },
+  {
+    "replay_hero": "HeroLostVikingsController",
+    "display_name": "Потерявшиеся викинги",
+    "aliases": [
+      "the lost vikings",
+      "викинги",
+      "lostvikings",
+      "lost vikings"
+    ],
+    "orderable": true
+  },
+  {
+    "replay_hero": "HeroProbius",
+    "display_name": "Пробиус",
+    "aliases": [
+      "probius",
+      "пробка"
+    ],
+    "orderable": true
+  },
+  {
+    "replay_hero": "HeroRagnaros",
+    "display_name": "Рагнарос",
+    "aliases": [
+      "рагна",
+      "ragnaros"
+    ],
+    "orderable": true
+  },
+  {
+    "replay_hero": "HeroRehgar",
+    "display_name": "Регар",
+    "aliases": [
+      "rehgar",
+      "собака",
+      "пес",
+      "пёс"
+    ],
+    "orderable": true
+  },
+  {
+    "replay_hero": "HeroRaynor",
+    "display_name": "Рейнор",
+    "aliases": [
+      "raynor",
+      "джимми",
+      "джимик"
+    ],
+    "orderable": true
+  },
+  {
+    "replay_hero": "HeroRexxar",
+    "display_name": "Рексар",
+    "aliases": [
+      "rexxar"
+    ],
+    "orderable": true
+  },
+  {
+    "replay_hero": "HeroSamuro",
+    "display_name": "Самуро",
+    "aliases": [
+      "samuro"
+    ],
+    "orderable": true
+  },
+  {
+    "replay_hero": "HeroFaerieDragon",
+    "display_name": "Светик",
+    "aliases": [
+      "brightwing",
+      "брайтвинг",
+      "бв"
+    ],
+    "orderable": true
+  },
+  {
+    "replay_hero": "HeroGreymane",
+    "display_name": "Седогрив",
+    "aliases": [
+      "greymane",
+      "грейман",
+      "седой"
+    ],
+    "orderable": true
+  },
+  {
+    "replay_hero": "HeroSgtHammer",
+    "display_name": "Сержант Кувалда",
+    "aliases": [
+      "sgt hammer",
+      "sgt. hammer",
+      "кувалда",
+      "хаммер",
+      "sgthammer",
+      "танк"
+    ],
+    "orderable": true
+  },
+  {
+    "replay_hero": "HeroSylvanas",
+    "display_name": "Сильвана",
+    "aliases": [
+      "sylvanas"
+    ],
+    "orderable": true
+  },
+  {
+    "replay_hero": "HeroDeathwing",
+    "display_name": "Смертокрыл",
+    "aliases": [
+      "deathwing",
+      "дв",
+      "dw"
+    ],
+    "orderable": true
+  },
+  {
+    "replay_hero": "HeroBarbarian",
+    "display_name": "Соня",
+    "aliases": [
+      "sonya"
+    ],
+    "orderable": true
+  },
+  {
+    "replay_hero": "HeroStitches",
+    "display_name": "Стежок",
+    "aliases": [
+      "stitches",
+      "стежек"
+    ],
+    "orderable": true
+  },
+  {
+    "replay_hero": "HeroStukov",
+    "display_name": "Стуков",
+    "aliases": [
+      "stukov"
+    ],
+    "orderable": true
+  },
+  {
+    "replay_hero": "HeroTychus",
+    "display_name": "Тайкус",
+    "aliases": [
+      "tychus"
+    ],
+    "orderable": true
+  },
+  {
+    "replay_hero": "HeroTassadar",
+    "display_name": "Тассадар",
+    "aliases": [
+      "tassadar",
+      "тасс",
+      "диман"
+    ],
+    "orderable": true
+  },
+  {
+    "replay_hero": "HeroTyrande",
+    "display_name": "Тиранда",
+    "aliases": [
+      "tyrande",
+      "мелик"
+    ],
+    "orderable": true
+  },
+  {
+    "replay_hero": "HeroTyrael",
+    "display_name": "Тираэль",
+    "aliases": [
+      "tyrael",
+      "тира",
+      "тираель"
+    ],
+    "orderable": true
+  },
+  {
+    "replay_hero": "HeroThrall",
+    "display_name": "Тралл",
+    "aliases": [
+      "thrall"
+    ],
+    "orderable": true
+  },
+  {
+    "replay_hero": "HeroTracer",
+    "display_name": "Трейсер",
+    "aliases": [
+      "tracer",
+      "следовка"
+    ],
+    "orderable": true
+  },
+  {
+    "replay_hero": "HeroUther",
+    "display_name": "Утер",
+    "aliases": [
+      "uther"
+    ],
+    "orderable": true
+  },
+  {
+    "replay_hero": "HeroFalstad",
+    "display_name": "Фалстад",
+    "aliases": [
+      "falstad",
+      "птица"
+    ],
+    "orderable": true
+  },
+  {
+    "replay_hero": "HeroFenix",
+    "display_name": "Феникс",
+    "aliases": [
+      "fenix",
+      "табуретка"
+    ],
+    "orderable": true
+  },
+  {
+    "replay_hero": "HeroHanzo",
+    "display_name": "Хандзо",
+    "aliases": [
+      "hanzo"
+    ],
+    "orderable": true
+  },
+  {
+    "replay_hero": "HeroChromie",
+    "display_name": "Хроми",
+    "aliases": [
+      "chromie",
+      "хромка"
+    ],
+    "orderable": true
+  },
+  {
+    "replay_hero": "HeroCho",
+    "display_name": "Чо",
+    "aliases": [
+      "cho"
+    ],
+    "orderable": true
+  },
+  {
+    "replay_hero": "HeroChen",
+    "display_name": "Чэнь",
+    "aliases": [
+      "chen",
+      "пиво"
+    ],
+    "orderable": true
+  },
+  {
+  "replay_hero": "HeroXalatath",
+  "display_name": "Ксал'атат",
+  "aliases": ["xalatath", "ксалатат", "ксал'атат", "салат"],
+  "orderable": true
+}
+]

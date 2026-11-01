@@ -1,0 +1,38 @@
+{
+  "battletags": [
+    "ВашНик",
+    "ВторойАккаунт"
+  ],
+
+  "toon_handles": [],
+
+  "auto_discover_accounts_root": "C:\\Users\\ВАШ_ПОЛЬЗОВАТЕЛЬ\\Documents\\Heroes of the Storm\\Accounts",
+
+  "poll_interval_seconds": 20,
+
+  "obs_output_file": "hots_stats.txt",
+  "obs_format": "Победы: {wins}\nПоражения: {losses}",
+  "known_players_file": "known_players.txt",
+
+  "match_results_enabled": true,
+  "match_results_format": "{result} на карте «{map}». Счёт сессии: {wins}–{losses}.",
+  "maps_file": "maps.json",
+
+  "orders_enabled": false,
+  "orders_reward_title": "Заказ героя",
+  "orders_reward_cost": 1000,
+  "orders_reward_prompt": "Напишите имя героя (список героев - команда !герои)",
+  "orders_poll_interval_seconds": 5,
+  "orders_storage_file": "orders.json",
+  "orders_queue_command": "!очередь",
+  "heroes_link_command": "!герои",
+  "heroes_link_url": "https://docs.google.com/spreadsheets/d/1JjNm3DkDIrqdKG1B8giJxrgRFezx1eyK6Cu2aEv5JY4/edit?usp=sharing",
+  "orders_heroes_file": "heroes.json",
+
+  "twitch_channel": "",
+  "twitch_bot_username": "",
+  "twitch_client_id": "",
+  "twitch_client_secret": "",
+  "twitch_refresh_token": "",
+  "twitch_broadcaster_refresh_token": ""
+}

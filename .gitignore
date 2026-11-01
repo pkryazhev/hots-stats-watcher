@@ -1,0 +1,48 @@
+# Local configuration (includes Twitch credentials and personal paths)
+/config.json
+/config.local.json
+/heroes.json
+.env
+.env.*
+!.env.example
+
+# Runtime data: orders, player identifiers, and OBS output
+/orders.json
+/known_players.txt
+/hots_stats.txt
+*.StormReplay
+*.log
+
+# Python bytecode, virtual environments, and tool caches
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+env/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+.coverage.*
+htmlcov/
+
+# Temporary files and backups (including atomic writes)
+*.tmp
+*.bak
+*.old
+*.orig
+*.swp
+*.swo
+*~
+
+# Local editor and coding assistant settings
+.vscode/
+.idea/
+.claude/
+.codex/
+.agents/
+
+# Operating system metadata
+.DS_Store
+Thumbs.db
+Desktop.ini
