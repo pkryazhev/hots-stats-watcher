@@ -15,7 +15,7 @@
   "known_players_file": "known_players.txt",
 
   "match_results_enabled": true,
-  "match_results_format": "{result} на карте «{map}». Счёт сессии: {wins}–{losses}.",
+  "match_results_format": "{result} на карте «{map}». Счёт: {wins}–{losses}.",
   "maps_file": "maps.json",
 
   "orders_enabled": false,

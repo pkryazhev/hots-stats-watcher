@@ -50,7 +50,7 @@ RESULT_LOSS = 2
 
 DEFAULT_CONFIG = {
     "match_results_enabled": True,
-    "match_results_format": "{result} на карте «{map}». Счёт сессии: {wins}–{losses}.",
+    "match_results_format": "{result} на карте «{map}». Счёт: {wins}–{losses}.",
     "maps_file": "maps.json",
     "battletags": [],
     "toon_handles": [],

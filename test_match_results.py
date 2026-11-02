@@ -21,11 +21,11 @@ class MatchResultsTests(unittest.TestCase):
     def test_win_with_orders_disabled(self):
         stats, bot = self.process([1], {"Map": "Карта"})
         self.assertEqual(stats["wins"], 3)
-        bot.send_message.assert_called_once_with("Победа на карте «Карта». Счёт сессии: 3–1.")
+        bot.send_message.assert_called_once_with("Победа на карте «Карта». Счёт: 3–1.")
 
     def test_loss_with_empty_translation(self):
         _, bot = self.process([2], {"Map": ""})
-        bot.send_message.assert_called_once_with("Поражение на карте «Map». Счёт сессии: 2–2.")
+        bot.send_message.assert_called_once_with("Поражение на карте «Map». Счёт: 2–2.")
 
     def test_unknown(self):
         stats, bot = self.process([0])
