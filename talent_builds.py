@@ -31,10 +31,11 @@ def collect_talents(events):
 
 
 class BuildStore:
-    def __init__(self, data_path):
+    def __init__(self, data_path, hero_dict=None):
         with open(data_path, encoding="utf-8") as stream:
             self.catalogs = json.load(stream)["builds"]
-        self._code = None
+        self.hero_dict = hero_dict
+        self._snapshot = None
         self._lock = threading.Lock()
 
     def make_code(self, player, base_build):
@@ -65,21 +66,51 @@ class BuildStore:
             digits[slot] = str(position)
         return "[T%s,%s]" % ("".join(digits), hero["hyperlink_id"])
 
-    def update(self, player, base_build):
-        try:
-            code = self.make_code(player, base_build)
-        except (ValueError, KeyError) as exc:
-            log.warning("Билд последнего матча недоступен: %s", exc)
-            code = None
+    def update_match(self, players, primary, base_build):
+        entries = []
+        primary_code = None
+        for player in players:
+            try:
+                code = self.make_code(player, base_build)
+            except (ValueError, KeyError) as exc:
+                log.warning("Билд героя %s недоступен: %s", player.get("hero"), exc)
+                code = None
+            hero = self.hero_dict.find_by_replay_hero(player["hero"]) if self.hero_dict else None
+            entries.append((hero["replay_hero"] if hero else player["hero"], code))
+            if player is primary:
+                primary_code = code
         with self._lock:
-            self._code = code
+            self._snapshot = (primary_code, tuple(entries))
 
     def handle_message(self, bot, command, text):
-        if command and text.strip().casefold() == command.strip().casefold():
-            with self._lock:
-                code = self._code
-            # Until a replay is available, keep the response code-only.
-            if code:
-                bot.send_message(code)
-            return True
-        return False
+        command = command.strip().casefold()
+        text = text.strip()
+        if not command or not text.casefold().startswith(command):
+            return False
+        argument = text[len(command):]
+        if argument and not argument[0].isspace():
+            return False
+        argument = argument.strip()
+        hero = None
+        if argument:
+            hero = self.hero_dict.resolve(argument) if self.hero_dict else None
+            if hero is None:
+                bot.send_message("Неизвестный герой «%s». Проверьте название." % argument)
+                return True
+        with self._lock:
+            snapshot = self._snapshot
+        if snapshot is None:
+            message = "Нет данных о последнем матче."
+        elif hero is None:
+            message = snapshot[0] or "Не удалось получить ваш билд для последнего матча."
+        else:
+            matches = [code for hero_id, code in snapshot[1] if hero_id == hero["replay_hero"]]
+            name = hero["display_name"]
+            if not matches:
+                message = "В последнем матче не было героя %s." % name
+            elif len(matches) > 1:
+                message = "В последнем матче было несколько героев %s." % name
+            else:
+                message = matches[0] or "Не удалось получить билд героя %s для этого матча." % name
+        bot.send_message(message)
+        return True

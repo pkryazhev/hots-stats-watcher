@@ -411,7 +411,7 @@ def process_file(path, config, battletags_lower, toon_handles, stats, hero_dict=
 
     primary = matches[0]
     if config.get("build_command_enabled") and build_store is not None:
-        build_store.update(primary, info["base_build"])
+        build_store.update_match(info["players"], primary, info["base_build"])
 
     for m in matches:
         record_known_player(config.get("known_players_file"), m["name"], m["toon_handle"], info["map"])
@@ -514,8 +514,10 @@ def setup_build_command(config, config_path, bot):
     if not config.get("build_command_enabled"):
         return None
     try:
+        hero_dict = heroes.HeroDict(heroes.load_heroes(
+            Path(config_path).resolve().parent / config["orders_heroes_file"]))
         store = talent_builds.BuildStore(
-            Path(config_path).resolve().parent / config["talent_data_file"])
+            Path(config_path).resolve().parent / config["talent_data_file"], hero_dict)
     except (OSError, ValueError, KeyError) as exc:
         log.error("Команда билда отключена: %s", exc)
         return None
@@ -738,7 +740,7 @@ def run(config_path):
                 if not matches:
                     matches = [p for p in info["players"] if p["name"].strip().lower() in battletags_lower]
                 if matches:
-                    build_store.update(matches[0], info["base_build"])
+                    build_store.update_match(info["players"], matches[0], info["base_build"])
                     break
             except Exception as exc:
                 log.debug("Не удалось восстановить билд из %s: %s", path, exc)
