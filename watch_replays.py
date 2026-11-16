@@ -42,6 +42,7 @@ import hero_orders
 import twitch_chat
 import twitch_helix
 import twitch_token_manager
+import talent_builds
 
 log = logging.getLogger("hots-stats-watcher")
 
@@ -49,6 +50,9 @@ RESULT_WIN = 1
 RESULT_LOSS = 2
 
 DEFAULT_CONFIG = {
+    "build_command_enabled": False,
+    "build_command": "!билд",
+    "talent_data_file": "talent_data.json",
     "match_results_enabled": True,
     "match_results_format": "{result} на карте «{map}». Счёт: {wins}–{losses}.",
     "maps_file": "maps.json",
@@ -136,7 +140,7 @@ def build_toon_handle(toon):
     return "{0}-{1}-{2}-{3}".format(region, program_id, realm, toon_id)
 
 
-def parse_tracker_heroes(archive, protocol):
+def parse_tracker_heroes(archive, protocol, events=None):
     """
     Разбирает replay.tracker.events и возвращает {control_player_id: internal_hero_name}.
 
@@ -147,18 +151,20 @@ def parse_tracker_heroes(archive, protocol):
     - внутренний (движковый) идентификатор героя, который НЕ зависит от
     языка клиента игры, в отличие от m_hero из replay.details.
     """
-    if not hasattr(protocol, "decode_replay_tracker_events"):
-        return {}
-    try:
-        contents = archive.read_file("replay.tracker.events")
-    except KeyError:
-        return {}
+    if events is None:
+        if not hasattr(protocol, "decode_replay_tracker_events"):
+            return {}
+        try:
+            contents = archive.read_file("replay.tracker.events")
+        except KeyError:
+            return {}
+        events = protocol.decode_replay_tracker_events(contents)
 
     def dec(b):
         return b.decode("utf-8", errors="replace") if isinstance(b, bytes) else b
 
     hero_by_player = {}
-    for event in protocol.decode_replay_tracker_events(contents):
+    for event in events:
         if event.get("_event") != "NNet.Replay.Tracker.SUnitBornEvent":
             continue
         control_player_id = event.get("m_controlPlayerId")
@@ -198,7 +204,12 @@ def parse_replay(path):
     def dec(b):
         return b.decode("utf-8", errors="replace") if isinstance(b, bytes) else b
 
-    hero_by_control_player_id = parse_tracker_heroes(archive, protocol)
+    try:
+        events = list(protocol.decode_replay_tracker_events(archive.read_file("replay.tracker.events")))
+    except (KeyError, AttributeError):
+        events = []
+    hero_by_control_player_id = parse_tracker_heroes(archive, protocol, events)
+    talents_chosen, talents_final = talent_builds.collect_talents(events)
 
     players = []
     for p in details.get("m_playerList", []):
@@ -222,6 +233,8 @@ def parse_replay(path):
                 "team": p.get("m_teamId"),
                 "result": p.get("m_result"),
                 "toon_handle": build_toon_handle(p.get("m_toon")),
+                "talents_chosen": talents_chosen.get(control_player_id, []),
+                "talents_final": talents_final.get(control_player_id),
             }
         )
 
@@ -360,7 +373,7 @@ def record_known_player(known_players_file, name, toon_handle, map_name):
 # Обработка одного нового файла реплея
 # ---------------------------------------------------------------------------
 
-def process_file(path, config, battletags_lower, toon_handles, stats, hero_dict=None, order_store=None, bot=None, map_names=None):
+def process_file(path, config, battletags_lower, toon_handles, stats, hero_dict=None, order_store=None, bot=None, map_names=None, build_store=None):
     try:
         info = parse_replay(path)
     except Exception as exc:  # noqa: BLE001 - реплей может быть повреждён/неподдерживаемая версия
@@ -397,6 +410,8 @@ def process_file(path, config, battletags_lower, toon_handles, stats, hero_dict=
         return
 
     primary = matches[0]
+    if config.get("build_command_enabled") and build_store is not None:
+        build_store.update_match(info["players"], primary, info["base_build"])
 
     for m in matches:
         record_known_player(config.get("known_players_file"), m["name"], m["toon_handle"], info["map"])
@@ -475,7 +490,7 @@ def format_queue_message(pending):
 
 
 def setup_chat(config, config_path):
-    if not (config.get("orders_enabled") or config.get("match_results_enabled")):
+    if not (config.get("orders_enabled") or config.get("match_results_enabled") or config.get("build_command_enabled")):
         return None
     required = ("twitch_channel", "twitch_bot_username", "twitch_client_id",
                 "twitch_client_secret", "twitch_refresh_token")
@@ -493,6 +508,28 @@ def setup_chat(config, config_path):
     )
     bot.start()
     return bot
+
+
+def setup_build_command(config, config_path, bot):
+    if not config.get("build_command_enabled"):
+        return None
+    try:
+        hero_dict = heroes.HeroDict(heroes.load_heroes(
+            Path(config_path).resolve().parent / config["orders_heroes_file"]))
+        store = talent_builds.BuildStore(
+            Path(config_path).resolve().parent / config["talent_data_file"], hero_dict)
+    except (OSError, ValueError, KeyError) as exc:
+        log.error("Команда билда отключена: %s", exc)
+        return None
+    if bot is not None:
+        previous_handler = bot.on_message
+
+        def on_message(login, mention, text):
+            if not store.handle_message(bot, config["build_command"], text):
+                previous_handler(login, mention, text)
+
+        bot.on_message = on_message
+    return store
 
 
 def setup_hero_orders(config, config_path, bot):
@@ -596,7 +633,13 @@ def setup_hero_orders(config, config_path, bot):
         log.error("Награда за баллы канала не настроена — заказы героев отключены")
         return None, None, None
 
-    bot.on_message = on_message
+    previous_handler = bot.on_message
+
+    def dispatch_message(login, mention, text):
+        previous_handler(login, mention, text)
+        on_message(login, mention, text)
+
+    bot.on_message = dispatch_message
     orders.start()
 
     log.info(
@@ -663,6 +706,7 @@ def run(config_path):
         log.warning("Не удалось загрузить словарь карт %s: %s", maps_path, exc)
         map_names = {}
     bot = setup_chat(config, config_path)
+    build_store = setup_build_command(config, config_path, bot)
     hero_dict, order_store, _ = setup_hero_orders(config, config_path, bot)
 
     stats = {"wins": 0, "losses": 0, "by_account": {}}
@@ -688,6 +732,18 @@ def run(config_path):
             except OSError:
                 pass
     log.info("Найдено %d существующих реплеев (пропускаются). Жду новых...", initial_count)
+    if build_store is not None:
+        for path in sorted(seen, key=os.path.getmtime, reverse=True):
+            try:
+                info = parse_replay(path)
+                matches = [p for p in info["players"] if p["toon_handle"] in toon_handles]
+                if not matches:
+                    matches = [p for p in info["players"] if p["name"].strip().lower() in battletags_lower]
+                if matches:
+                    build_store.update_match(info["players"], matches[0], info["base_build"])
+                    break
+            except Exception as exc:
+                log.debug("Не удалось восстановить билд из %s: %s", path, exc)
 
     write_obs_file(config, stats)
 
@@ -707,7 +763,7 @@ def run(config_path):
                         # размер не изменился со времени прошлой проверки -
                         # файл дозаписан игрой, можно разбирать
                         del pending[path]
-                        process_file(path, config, battletags_lower, toon_handles, stats, hero_dict, order_store, bot, map_names)
+                        process_file(path, config, battletags_lower, toon_handles, stats, hero_dict, order_store, bot, map_names, build_store)
                         seen[path] = size
                     else:
                         # файл только что появился или ещё дозаписывается -
