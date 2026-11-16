@@ -18,6 +18,10 @@
   "match_results_format": "{result} на карте «{map}». Счёт: {wins}–{losses}.",
   "maps_file": "maps.json",
 
+  "build_command_enabled": false,
+  "build_command": "!билд",
+  "talent_data_file": "talent_data.json",
+
   "orders_enabled": false,
   "orders_reward_title": "Заказ героя",
   "orders_reward_cost": 1000,
