@@ -17,6 +17,7 @@
   "match_results_enabled": true,
   "match_results_format": "{result} на карте «{map}». Счёт: {wins}–{losses}.",
   "maps_file": "maps.json",
+  "results_file": "results.json",
 
   "build_command_enabled": false,
   "build_command": "!билд",
