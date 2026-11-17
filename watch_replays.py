@@ -48,6 +48,7 @@ log = logging.getLogger("hots-stats-watcher")
 
 RESULT_WIN = 1
 RESULT_LOSS = 2
+DEFAULT_RESULT_NAMES = {"win": "Победа", "loss": "Поражение"}
 
 DEFAULT_CONFIG = {
     "build_command_enabled": False,
@@ -56,6 +57,7 @@ DEFAULT_CONFIG = {
     "match_results_enabled": True,
     "match_results_format": "{result} на карте «{map}». Счёт: {wins}–{losses}.",
     "maps_file": "maps.json",
+    "results_file": "results.json",
     "battletags": [],
     "toon_handles": [],
     "replay_folders": [],
@@ -257,6 +259,22 @@ def load_config(path):
     return config
 
 
+def load_result_names(config_path, config):
+    path = Path(config_path).resolve().parent / config["results_file"]
+    names = dict(DEFAULT_RESULT_NAMES)
+    try:
+        with open(path, encoding="utf-8") as f:
+            raw = json.load(f)
+        if not isinstance(raw, dict) or any(not isinstance(v, str) for v in raw.values()):
+            raise ValueError("Ожидается словарь результатов со строковыми значениями")
+        for key in names:
+            if raw.get(key, "").strip():
+                names[key] = raw[key]
+    except (OSError, ValueError) as exc:
+        log.warning("Не удалось загрузить словарь результатов %s: %s", path, exc)
+    return names
+
+
 _persist_config_lock = threading.Lock()
 
 
@@ -373,7 +391,7 @@ def record_known_player(known_players_file, name, toon_handle, map_name):
 # Обработка одного нового файла реплея
 # ---------------------------------------------------------------------------
 
-def process_file(path, config, battletags_lower, toon_handles, stats, hero_dict=None, order_store=None, bot=None, map_names=None, build_store=None):
+def process_file(path, config, battletags_lower, toon_handles, stats, hero_dict=None, order_store=None, bot=None, map_names=None, build_store=None, result_names=None):
     try:
         info = parse_replay(path)
     except Exception as exc:  # noqa: BLE001 - реплей может быть повреждён/неподдерживаемая версия
@@ -461,7 +479,7 @@ def process_file(path, config, battletags_lower, toon_handles, stats, hero_dict=
         translated = (map_names or {}).get(map_name)
         try:
             message = config["match_results_format"].format(
-                result="Победа" if primary["result"] == RESULT_WIN else "Поражение",
+                result=(result_names or DEFAULT_RESULT_NAMES)["win" if primary["result"] == RESULT_WIN else "loss"],
                 map=translated or map_name or "Неизвестная карта",
                 wins=stats["wins"], losses=stats["losses"],
             )
@@ -673,6 +691,7 @@ def scan_folder(folder):
 
 def run(config_path):
     config = load_config(config_path)
+    result_names = load_result_names(config_path, config)
 
     battletags_lower = {bt.strip().lower() for bt in config.get("battletags", []) if bt.strip()}
     toon_handles = {t.strip() for t in config.get("toon_handles", []) if t.strip()}
@@ -763,7 +782,7 @@ def run(config_path):
                         # размер не изменился со времени прошлой проверки -
                         # файл дозаписан игрой, можно разбирать
                         del pending[path]
-                        process_file(path, config, battletags_lower, toon_handles, stats, hero_dict, order_store, bot, map_names, build_store)
+                        process_file(path, config, battletags_lower, toon_handles, stats, hero_dict, order_store, bot, map_names, build_store, result_names)
                         seen[path] = size
                     else:
                         # файл только что появился или ещё дозаписывается -
