@@ -1,0 +1,35 @@
+{
+  "orders": {
+    "accepted": "@{user} заказ героя {hero} принят NOTED",
+    "unknown_hero": "@{user} SHTO попробуй еще раз",
+    "unavailable_hero": "@{user} заказ данного героя пока недоступен uvi",
+    "refunded": " (баллы возвращены)",
+    "fulfilled": "Заказ героя {hero} от @{user} выполнен"
+  },
+  "queue": {
+    "empty": "Очередь заказов пуста",
+    "list": "Очередь заказов: {items}",
+    "item": "{number}. {hero} (@{user})",
+    "separator": ", ",
+    "more": " … и ещё {count}"
+  },
+  "build": {
+    "unknown_hero": "Неизвестный герой «{input}». Проверьте название.",
+    "no_match": "Нет данных о последнем матче.",
+    "own_unavailable": "Не удалось получить ваш билд для последнего матча.",
+    "hero_absent": "В последнем матче не было героя {hero}.",
+    "hero_ambiguous": "В последнем матче было несколько героев {hero}.",
+    "hero_unavailable": "Не удалось получить билд героя {hero} для этого матча.",
+    "success": "{build_code}"
+  },
+  "match": {
+    "result": "{result} на карте «{map}». Счёт: {wins}–{losses}.",
+    "win": "Победа",
+    "loss": "Поражение",
+    "unknown_map": "Неизвестная карта"
+  },
+  "heroes": {
+    "link": "{url}",
+    "no_link": "Для заказа доступны все герои"
+  }
+}

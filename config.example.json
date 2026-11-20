@@ -16,6 +16,7 @@
 
   "match_results_enabled": true,
   "match_results_format": "{result} на карте «{map}». Счёт: {wins}–{losses}.",
+  "chat_messages_file": "chat_messages.json",
   "maps_file": "maps.json",
   "results_file": "results.json",
 
@@ -31,7 +32,7 @@
   "orders_storage_file": "orders.json",
   "orders_queue_command": "!очередь",
   "heroes_link_command": "!герои",
-  "heroes_link_url": "https://docs.google.com/spreadsheets/d/1JjNm3DkDIrqdKG1B8giJxrgRFezx1eyK6Cu2aEv5JY4/edit?usp=sharing",
+  "heroes_link_url": "",
   "orders_heroes_file": "heroes.json",
 
   "twitch_channel": "",
