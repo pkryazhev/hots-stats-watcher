@@ -29,13 +29,14 @@ import threading
 import time
 
 import twitch_helix
+from chat_messages import render
 
 log = logging.getLogger("hots-stats-watcher")
 
 
 class ChannelPointsOrders:
     def __init__(self, client_id, token_manager, broadcaster_id, store, hero_dict, bot,
-                 reward_settings, poll_interval):
+                 reward_settings, poll_interval, messages=None):
         self.client_id = client_id
         self.token_manager = token_manager
         self.broadcaster_id = broadcaster_id
@@ -44,6 +45,7 @@ class ChannelPointsOrders:
         self.bot = bot
         self.reward_settings = reward_settings
         self.poll_interval = poll_interval
+        self.messages = messages
         # Активации, которые мы уже пытались отменить: если отмена не прошла,
         # не хотим спамить в чат отказом на каждом опросе.
         self._rejected_ids = set()
@@ -143,16 +145,16 @@ class ChannelPointsOrders:
         hero = self.hero_dict.resolve(hero_text)
         if hero is None:
             log.info("Заказ от %s: герой %r не распознан - возвращаю баллы", mention, hero_text)
-            self._reject(reward_id, r, "@{0} SHTO попробуй еще раз".format(mention))
+            self._reject(reward_id, r, render(self.messages, "orders.unknown_hero", user=mention))
             return
         if not hero.get("orderable", True):
             log.info("Заказ от %s: герой %s недоступен для заказа - возвращаю баллы", mention, hero["display_name"])
-            self._reject(reward_id, r, "@{0} заказ данного героя пока недоступен uvi".format(mention))
+            self._reject(reward_id, r, render(self.messages, "orders.unavailable_hero", user=mention))
             return
 
         self.store.add_pending(r["id"], reward_id, login, mention, hero, r.get("redeemed_at"))
         log.info("Принят заказ героя %s от %s", hero["display_name"], mention)
-        self.bot.send_message("@{0} заказ героя {1} принят NOTED".format(mention, hero["display_name"]))
+        self.bot.send_message(render(self.messages, "orders.accepted", user=mention, hero=hero["display_name"]))
 
     def _reject(self, reward_id, r, message):
         self._rejected_ids.add(r["id"])
@@ -161,7 +163,7 @@ class ChannelPointsOrders:
             self.client_id, self.token_manager,
         )
         if ok:
-            message += " (баллы возвращены)"
+            message += render(self.messages, "orders.refunded")
         else:
             log.error(
                 "Не удалось вернуть баллы зрителю %s (активация %s) - верните их вручную в очереди наград Twitch",

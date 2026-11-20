@@ -3,6 +3,8 @@ import json
 import logging
 import threading
 
+from chat_messages import render
+
 log = logging.getLogger("hots-stats-watcher")
 LEVELS = (1, 4, 7, 10, 13, 16, 20)
 
@@ -31,10 +33,11 @@ def collect_talents(events):
 
 
 class BuildStore:
-    def __init__(self, data_path, hero_dict=None):
+    def __init__(self, data_path, hero_dict=None, messages=None):
         with open(data_path, encoding="utf-8") as stream:
             self.catalogs = json.load(stream)["builds"]
         self.hero_dict = hero_dict
+        self.messages = messages
         self._snapshot = None
         self._lock = threading.Lock()
 
@@ -95,22 +98,24 @@ class BuildStore:
         if argument:
             hero = self.hero_dict.resolve(argument) if self.hero_dict else None
             if hero is None:
-                bot.send_message("Неизвестный герой «%s». Проверьте название." % argument)
+                bot.send_message(render(self.messages, "build.unknown_hero", input=argument))
                 return True
         with self._lock:
             snapshot = self._snapshot
         if snapshot is None:
-            message = "Нет данных о последнем матче."
+            message = render(self.messages, "build.no_match")
         elif hero is None:
-            message = snapshot[0] or "Не удалось получить ваш билд для последнего матча."
+            message = (render(self.messages, "build.success", build_code=snapshot[0])
+                       if snapshot[0] else render(self.messages, "build.own_unavailable"))
         else:
             matches = [code for hero_id, code in snapshot[1] if hero_id == hero["replay_hero"]]
             name = hero["display_name"]
             if not matches:
-                message = "В последнем матче не было героя %s." % name
+                message = render(self.messages, "build.hero_absent", hero=name)
             elif len(matches) > 1:
-                message = "В последнем матче было несколько героев %s." % name
+                message = render(self.messages, "build.hero_ambiguous", hero=name)
             else:
-                message = matches[0] or "Не удалось получить билд героя %s для этого матча." % name
+                message = (render(self.messages, "build.success", build_code=matches[0])
+                           if matches[0] else render(self.messages, "build.hero_unavailable", hero=name))
         bot.send_message(message)
         return True

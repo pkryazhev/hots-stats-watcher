@@ -37,6 +37,7 @@ import mpyq  # noqa: E402
 import heroprotocol.versions as hv  # noqa: E402
 
 import channel_points
+import chat_messages
 import heroes
 import hero_orders
 import twitch_chat
@@ -48,14 +49,15 @@ log = logging.getLogger("hots-stats-watcher")
 
 RESULT_WIN = 1
 RESULT_LOSS = 2
-DEFAULT_RESULT_NAMES = {"win": "Победа", "loss": "Поражение"}
+DEFAULT_RESULT_NAMES = {key: chat_messages.DEFAULTS[f"match.{key}"] for key in ("win", "loss")}
 
 DEFAULT_CONFIG = {
     "build_command_enabled": False,
     "build_command": "!билд",
     "talent_data_file": "talent_data.json",
     "match_results_enabled": True,
-    "match_results_format": "{result} на карте «{map}». Счёт: {wins}–{losses}.",
+    "match_results_format": chat_messages.DEFAULTS["match.result"],
+    "chat_messages_file": "chat_messages.json",
     "maps_file": "maps.json",
     "results_file": "results.json",
     "battletags": [],
@@ -75,7 +77,7 @@ DEFAULT_CONFIG = {
     "orders_storage_file": "orders.json",
     "orders_queue_command": "!очередь",
     "heroes_link_command": "!герои",
-    "heroes_link_url": "https://docs.google.com/spreadsheets/d/1JjNm3DkDIrqdKG1B8giJxrgRFezx1eyK6Cu2aEv5JY4/edit?usp=sharing",
+    "heroes_link_url": "",
     "orders_heroes_file": "heroes.json",
     "twitch_channel": "",
     "twitch_bot_username": "",
@@ -391,7 +393,7 @@ def record_known_player(known_players_file, name, toon_handle, map_name):
 # Обработка одного нового файла реплея
 # ---------------------------------------------------------------------------
 
-def process_file(path, config, battletags_lower, toon_handles, stats, hero_dict=None, order_store=None, bot=None, map_names=None, build_store=None, result_names=None):
+def process_file(path, config, battletags_lower, toon_handles, stats, hero_dict=None, order_store=None, bot=None, map_names=None, build_store=None, result_names=None, messages=None):
     try:
         info = parse_replay(path)
     except Exception as exc:  # noqa: BLE001 - реплей может быть повреждён/неподдерживаемая версия
@@ -450,7 +452,7 @@ def process_file(path, config, battletags_lower, toon_handles, stats, hero_dict=
         for hero in played_heroes.values():
             for order in order_store.mark_fulfilled(hero):
                 bot.send_message(
-                    "Заказ героя {0} от @{1} выполнен".format(hero["display_name"], order.mention)
+                    chat_messages.render(messages, "orders.fulfilled", hero=hero["display_name"], user=order.mention)
                 )
 
     if primary["result"] == RESULT_WIN:
@@ -478,9 +480,10 @@ def process_file(path, config, battletags_lower, toon_handles, stats, hero_dict=
         map_name = info["map"]
         translated = (map_names or {}).get(map_name)
         try:
-            message = config["match_results_format"].format(
-                result=(result_names or DEFAULT_RESULT_NAMES)["win" if primary["result"] == RESULT_WIN else "loss"],
-                map=translated or map_name or "Неизвестная карта",
+            result_key = "win" if primary["result"] == RESULT_WIN else "loss"
+            message = chat_messages.template(messages, "match.result", config["match_results_format"]).format(
+                result=chat_messages.result_label(messages, result_key, (result_names or DEFAULT_RESULT_NAMES)[result_key]),
+                map=translated or map_name or chat_messages.render(messages, "match.unknown_map"),
                 wins=stats["wins"], losses=stats["losses"],
             )
             bot.send_message(message)
@@ -495,16 +498,26 @@ def process_file(path, config, battletags_lower, toon_handles, stats, hero_dict=
 QUEUE_MESSAGE_MAX_LEN = 450  # лимит сообщения в чате Twitch - 500 символов
 
 
-def format_queue_message(pending):
+def format_queue_message(pending, messages=None):
     if not pending:
-        return "Очередь заказов пуста"
-    text = "Очередь заказов: "
+        return chat_messages.render(messages, "queue.empty")[:QUEUE_MESSAGE_MAX_LEN]
+    separator = chat_messages.render(messages, "queue.separator")
+    items = []
+    best = chat_messages.render(messages, "queue.list", items="")
+    best += chat_messages.render(messages, "queue.more", count=len(pending))
     for i, order in enumerate(pending):
-        item = "{0}. {1} (@{2})".format(i + 1, order.display_name, order.mention)
-        if i > 0 and len(text) + len(item) + 2 > QUEUE_MESSAGE_MAX_LEN:
-            return text + " … и ещё {0}".format(len(pending) - i)
-        text += (", " if i > 0 else "") + item
-    return text
+        items.append(chat_messages.render(
+            messages, "queue.item", number=i + 1, hero=order.display_name, user=order.mention,
+        ))
+        text = chat_messages.render(messages, "queue.list", items=separator.join(items))
+        if len(text) > QUEUE_MESSAGE_MAX_LEN:
+            break
+        remaining = len(pending) - len(items)
+        if remaining:
+            text += chat_messages.render(messages, "queue.more", count=remaining)
+        if len(text) <= QUEUE_MESSAGE_MAX_LEN:
+            best = text
+    return best[:QUEUE_MESSAGE_MAX_LEN]
 
 
 def setup_chat(config, config_path):
@@ -528,14 +541,14 @@ def setup_chat(config, config_path):
     return bot
 
 
-def setup_build_command(config, config_path, bot):
+def setup_build_command(config, config_path, bot, messages=None):
     if not config.get("build_command_enabled"):
         return None
     try:
         hero_dict = heroes.HeroDict(heroes.load_heroes(
             Path(config_path).resolve().parent / config["orders_heroes_file"]))
         store = talent_builds.BuildStore(
-            Path(config_path).resolve().parent / config["talent_data_file"], hero_dict)
+            Path(config_path).resolve().parent / config["talent_data_file"], hero_dict, messages)
     except (OSError, ValueError, KeyError) as exc:
         log.error("Команда билда отключена: %s", exc)
         return None
@@ -550,7 +563,7 @@ def setup_build_command(config, config_path, bot):
     return store
 
 
-def setup_hero_orders(config, config_path, bot):
+def setup_hero_orders(config, config_path, bot, messages=None):
     """
     Настраивает заказы поверх уже запущенного чат-бота.
     При отключении или ошибке возвращает (None, None, None),
@@ -620,15 +633,18 @@ def setup_hero_orders(config, config_path, bot):
 
     queue_command = config.get("orders_queue_command", "!очередь").strip().casefold()
     heroes_link_command = config.get("heroes_link_command", "!герои").strip().casefold()
-    heroes_link_url = config.get("heroes_link_url", "")
+    heroes_link_url = (config.get("heroes_link_url") or "").strip()
 
     def on_message(login, mention, text):
         text_cf = text.strip().casefold()
 
         if heroes_link_command and text_cf == heroes_link_command:
-            bot.send_message(heroes_link_url)
+            if heroes_link_url:
+                bot.send_message(chat_messages.render(messages, "heroes.link", url=heroes_link_url))
+            else:
+                bot.send_message(chat_messages.render(messages, "heroes.no_link"))
         elif queue_command and text_cf == queue_command:
-            bot.send_message(format_queue_message(order_store.list_pending()))
+            bot.send_message(format_queue_message(order_store.list_pending(), messages))
 
 
     orders = channel_points.ChannelPointsOrders(
@@ -646,6 +662,7 @@ def setup_hero_orders(config, config_path, bot):
             "is_enabled": True,
         },
         poll_interval=max(2, int(config.get("orders_poll_interval_seconds", 5))),
+        messages=messages,
     )
     if not orders.ensure_reward():
         log.error("Награда за баллы канала не настроена — заказы героев отключены")
@@ -692,6 +709,7 @@ def scan_folder(folder):
 def run(config_path):
     config = load_config(config_path)
     result_names = load_result_names(config_path, config)
+    messages = chat_messages.load(Path(config_path).resolve().parent / config["chat_messages_file"])
 
     battletags_lower = {bt.strip().lower() for bt in config.get("battletags", []) if bt.strip()}
     toon_handles = {t.strip() for t in config.get("toon_handles", []) if t.strip()}
@@ -725,8 +743,8 @@ def run(config_path):
         log.warning("Не удалось загрузить словарь карт %s: %s", maps_path, exc)
         map_names = {}
     bot = setup_chat(config, config_path)
-    build_store = setup_build_command(config, config_path, bot)
-    hero_dict, order_store, _ = setup_hero_orders(config, config_path, bot)
+    build_store = setup_build_command(config, config_path, bot, messages)
+    hero_dict, order_store, _ = setup_hero_orders(config, config_path, bot, messages)
 
     stats = {"wins": 0, "losses": 0, "by_account": {}}
     seen = {}
@@ -782,7 +800,7 @@ def run(config_path):
                         # размер не изменился со времени прошлой проверки -
                         # файл дозаписан игрой, можно разбирать
                         del pending[path]
-                        process_file(path, config, battletags_lower, toon_handles, stats, hero_dict, order_store, bot, map_names, build_store, result_names)
+                        process_file(path, config, battletags_lower, toon_handles, stats, hero_dict, order_store, bot, map_names, build_store, result_names, messages)
                         seen[path] = size
                     else:
                         # файл только что появился или ещё дозаписывается -

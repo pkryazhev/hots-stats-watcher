@@ -2,6 +2,7 @@ import unittest
 import json
 import tempfile
 from pathlib import Path
+from types import SimpleNamespace
 from unittest.mock import Mock, patch
 
 import watch_replays as watcher
@@ -9,7 +10,7 @@ from twitch_chat import TwitchChatBot
 
 
 class MatchResultsTests(unittest.TestCase):
-    def process(self, results, translations=None, result_names=None):
+    def process(self, results, translations=None, result_names=None, messages=None):
         config = dict(watcher.DEFAULT_CONFIG)
         stats = {"wins": 2, "losses": 1, "by_account": {}}
         bot = Mock()
@@ -18,7 +19,8 @@ class MatchResultsTests(unittest.TestCase):
         with patch.object(watcher, "parse_replay", return_value={"map": "Map", "players": players}), \
                 patch.object(watcher, "write_obs_file"), patch.object(watcher, "record_known_player"):
             watcher.process_file("test", config, {"player"}, set(), stats,
-                                 bot=bot, map_names=translations, result_names=result_names)
+                                 bot=bot, map_names=translations, result_names=result_names,
+                                 messages=messages)
         return stats, bot
 
     def test_win_with_orders_disabled(self):
@@ -43,6 +45,30 @@ class MatchResultsTests(unittest.TestCase):
                 bot.send_message.assert_called_once_with(
                     f"{text} на карте «Map». Счёт: {stats['wins']}–{stats['losses']}."
                 )
+
+    def test_chat_templates_override_legacy_result_labels(self):
+        messages = {"match.result": "{wins}:{losses} — {result} ({map})", "match.win": "Ура"}
+        _, bot = self.process([1], result_names={"win": "Старый текст"}, messages=messages)
+        bot.send_message.assert_called_once_with("3:1 — Ура (Map)")
+
+    def test_chat_templates_keep_valid_entries_when_one_is_invalid(self):
+        with tempfile.TemporaryDirectory() as folder:
+            path = Path(folder) / "chat_messages.json"
+            path.write_text(json.dumps({"queue": {"empty": "Пока пусто", "list": "{unknown}"}}),
+                            encoding="utf-8")
+            with self.assertLogs(watcher.log, "WARNING") as logs:
+                messages = watcher.chat_messages.load(path)
+            self.assertIn("queue.list", logs.output[0])
+            self.assertEqual(watcher.format_queue_message([], messages), "Пока пусто")
+            order = SimpleNamespace(display_name="Валла", mention="viewer")
+            self.assertEqual(watcher.format_queue_message([order], messages),
+                             "Очередь заказов: 1. Валла (@viewer)")
+
+    def test_custom_queue_reserves_room_for_remaining_count(self):
+        messages = {"queue.list": "x" * 430 + "{items}", "queue.item": "{hero}", "queue.more": " +{count}"}
+        order = SimpleNamespace(display_name="abcdefghij", mention="viewer")
+        response = watcher.format_queue_message([order] * 3, messages)
+        self.assertEqual(response, "x" * 430 + "abcdefghij +2")
 
     def test_result_names_file(self):
         with tempfile.TemporaryDirectory() as folder:
