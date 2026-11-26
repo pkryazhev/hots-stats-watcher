@@ -56,6 +56,34 @@ class TalentBuildTests(unittest.TestCase):
         self.store.handle_message(bot, "!build", "!build")
         bot.send_message.assert_called_once_with("Не удалось получить ваш билд для последнего матча.")
 
+    def test_background_catalog_updates_current_match(self):
+        player = self.player()
+        catalog = self.store.catalogs["98348"]
+        self.store._catalog_loader = Mock(return_value=catalog)
+        with patch.object(talent_builds.threading, "Thread") as thread:
+            self.store.update_match([player], player, 999999)
+            self.assertIn("Не удалось", self.reply("!билд")[1])
+            thread.assert_called_once()
+            worker = thread.call_args.kwargs
+        worker["target"](*worker["args"])
+        self.store._catalog_loader.assert_called_once_with("999999")
+        self.assertEqual(self.reply("!билд"), (True, "[T0000000,Valla]"))
+
+    def test_unreadable_tracker_keeps_match_result(self):
+        archive = Mock()
+        archive.header = {"user_data_header": {"content": b"header"}}
+        protocol = Mock()
+        protocol.decode_replay_details.return_value = {
+            "m_playerList": [{"m_name": b"Player", "m_hero": b"Abathur", "m_result": 1}],
+        }
+        protocol.decode_replay_tracker_events.side_effect = watcher.CorruptedError("tracker")
+        with patch.object(watcher.mpyq, "MPQArchive", return_value=archive), \
+             patch.object(watcher.hv, "latest") as latest, \
+             patch.object(watcher, "resolve_protocol", return_value=protocol):
+            latest.return_value.decode_replay_header.return_value = {"m_version": {"m_baseBuild": 999999}}
+            player, = watcher.parse_replay("match.StormReplay")["players"]
+        self.assertEqual((player["hero"], player["result"], player["talents_final"]), ("Abathur", 1, None))
+
     def test_disabled_command_does_not_change_handler(self):
         bot = Mock()
         handler = bot.on_message

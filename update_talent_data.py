@@ -47,38 +47,53 @@ def apply_patch(document, operations):
     return document
 
 
-def main():
-    versions = fetch(".version.json")["versions"]
-    versions = [v for v in versions if "_ptr" not in v]
-    version = versions[-1]
-    cache = {}
-
-    def load(version):
-        if version in cache:
-            return cache[version]
+def load_hero_data(version, cache):
+    if version not in cache:
         meta = fetch(version + "/.hdp.json")
         data = fetch(version + "/data/" + meta["files"]["[data]"]["herodata"])
         if meta["json"] == "patch":
-            data = apply_patch(copy.deepcopy(load(meta["depends-on"])), data)
+            parent = load_hero_data(meta["depends-on"], cache)
+            data = apply_patch(copy.deepcopy(parent), data)
         cache[version] = data
-        return data
+    return cache[version]
+
+
+def build_number(version):
+    return str(int(version.rsplit(".", 1)[-1].split("_")[0]))
+
+
+def make_catalog(data):
+    heroes = {}
+    for hero_id, hero in data["items"].items():
+        talents = {}
+        for tier, entries in hero.get("talents", {}).items():
+            for talent in entries:
+                talents[talent["talentId"]] = [int(tier.lower().replace("level", "")), talent["sort"]]
+        heroes[hero.get("unitId", "Hero" + hero_id)] = {
+            "hyperlink_id": hero["hyperlinkId"], "talents": talents,
+        }
+    return heroes
+
+
+def fetch_catalog(base_build):
+    versions = fetch(".version.json")["versions"]
+    for version in reversed(versions):
+        if build_number(version) == str(base_build):
+            if fetch(version + "/.hdp.json").get("extracted"):
+                return make_catalog(load_hero_data(version, {}))
+    return None
+
+
+def main():
+    versions = [v for v in fetch(".version.json")["versions"] if "_ptr" not in v]
+    version = versions[-1]
+    cache = {}
 
     for ver in versions:
         meta = fetch(ver + "/.hdp.json")
         if meta.get("extracted"):
-            load(ver)
-    catalogs = {}
-    for ver, data in cache.items():
-        heroes = {}
-        for hero_id, hero in data["items"].items():
-            talents = {}
-            for tier, entries in hero.get("talents", {}).items():
-                for talent in entries:
-                    talents[talent["talentId"]] = [int(tier.lower().replace("level", "")), talent["sort"]]
-            heroes[hero.get("unitId", "Hero" + hero_id)] = {
-                "hyperlink_id": hero["hyperlinkId"], "talents": talents,
-            }
-        catalogs[str(int(ver.split(".")[-1].split("_")[0]))] = heroes
+            load_hero_data(ver, cache)
+    catalogs = {build_number(ver): make_catalog(data) for ver, data in cache.items()}
     output = {"source": BASE, "version": version, "builds": catalogs}
     Path(__file__).with_name("talent_data.json").write_text(
         json.dumps(output, ensure_ascii=False, separators=(",", ":")) + "\n", encoding="utf-8")
