@@ -2,6 +2,7 @@
 import json
 import logging
 import threading
+import time
 
 from chat_messages import render
 
@@ -33,13 +34,17 @@ def collect_talents(events):
 
 
 class BuildStore:
-    def __init__(self, data_path, hero_dict=None, messages=None):
+    def __init__(self, data_path, hero_dict=None, messages=None, catalog_loader=None):
         with open(data_path, encoding="utf-8") as stream:
             self.catalogs = json.load(stream)["builds"]
         self.hero_dict = hero_dict
         self.messages = messages
         self._snapshot = None
         self._lock = threading.Lock()
+        self._catalog_loader = catalog_loader
+        self._pending_match = None
+        self._refreshing = False
+        self._retry_after = {}
 
     def make_code(self, player, base_build):
         # Never silently apply talent positions from a different patch.
@@ -70,20 +75,58 @@ class BuildStore:
         return "[T%s,%s]" % ("".join(digits), hero["hyperlink_id"])
 
     def update_match(self, players, primary, base_build):
+        with self._lock:
+            build = str(base_build)
+            self._pending_match = None
+            if build not in self.catalogs:
+                log.warning("Нет справочника талантов для версии %s", build)
+                players = tuple(players)
+                self._pending_match = (players, primary, build)
+            self._set_snapshot(players, primary, build)
+            self._start_refresh()
+
+    def _start_refresh(self):
+        if not self._catalog_loader or not self._pending_match or self._refreshing:
+            return
+        build = self._pending_match[2]
+        if time.monotonic() < self._retry_after.get(build, 0):
+            return
+        self._refreshing = True
+        threading.Thread(target=self._refresh_catalog, args=(build,), daemon=True).start()
+
+    def _refresh_catalog(self, build):
+        catalog = None
+        try:
+            catalog = self._catalog_loader(build)
+        except Exception as exc:
+            log.warning("Не удалось обновить справочник талантов для версии %s: %s", build, exc)
+        with self._lock:
+            self._refreshing = False
+            if catalog:
+                self.catalogs[build] = catalog
+                log.info("Загружен справочник талантов для версии %s", build)
+            else:
+                self._retry_after[build] = time.monotonic() + 300
+            if self._pending_match and self._pending_match[2] in self.catalogs:
+                self._set_snapshot(*self._pending_match)
+                self._pending_match = None
+            self._start_refresh()
+
+    def _set_snapshot(self, players, primary, base_build):
         entries = []
         primary_code = None
         for player in players:
-            try:
-                code = self.make_code(player, base_build)
-            except (ValueError, KeyError) as exc:
-                log.warning("Билд героя %s недоступен: %s", player.get("hero"), exc)
-                code = None
+            code = None
+            if base_build in self.catalogs:
+                try:
+                    code = self.make_code(player, base_build)
+                except (ValueError, KeyError) as exc:
+                    log.warning("Билд героя %s недоступен: %s", player.get("hero"), exc)
             hero = self.hero_dict.find_by_replay_hero(player["hero"]) if self.hero_dict else None
             entries.append((hero["replay_hero"] if hero else player["hero"], code))
             if player is primary:
                 primary_code = code
-        with self._lock:
-            self._snapshot = (primary_code, tuple(entries))
+        self._snapshot = (primary_code, tuple(entries))
 
     def handle_message(self, bot, command, text):
         command = command.strip().casefold()
@@ -101,6 +144,7 @@ class BuildStore:
                 bot.send_message(render(self.messages, "build.unknown_hero", input=argument))
                 return True
         with self._lock:
+            self._start_refresh()
             snapshot = self._snapshot
         if snapshot is None:
             message = render(self.messages, "build.no_match")

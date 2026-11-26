@@ -35,6 +35,7 @@ sys.path.insert(0, str(VENDOR_DIR))
 
 import mpyq  # noqa: E402
 import heroprotocol.versions as hv  # noqa: E402
+from heroprotocol.decoders import CorruptedError, TruncatedError  # noqa: E402
 
 import channel_points
 import chat_messages
@@ -44,6 +45,7 @@ import twitch_chat
 import twitch_helix
 import twitch_token_manager
 import talent_builds
+from update_talent_data import fetch_catalog
 
 log = logging.getLogger("hots-stats-watcher")
 
@@ -99,8 +101,7 @@ def resolve_protocol(base_build):
     heroprotocol содержит файлы protocolXXXXX.py только для тех билдов,
     которые были в репозитории на момент его сборки. Если вышел новый патч
     Heroes of the Storm, а обновлённого protocol-файла ещё нет - берём
-    ближайший более старый (формат replay.details/tracker почти никогда не
-    меняется между соседними патчами, так что это надёжный fallback).
+    ближайший более старый. Совместимость формата реплея зависит от патча.
     """
     try:
         return hv.build(base_build)
@@ -148,12 +149,8 @@ def parse_tracker_heroes(archive, protocol, events=None):
     """
     Разбирает replay.tracker.events и возвращает {control_player_id: internal_hero_name}.
 
-    internal_hero_name - это m_unitTypeName самого первого SUnitBornEvent,
-    принадлежащего данному control_player_id. Герой рождается в самом начале
-    матча, раньше любых других юнитов/призывов, которыми управляет игрок,
-    поэтому "первое рождение юнита под этим ID" надёжно даёт героя. Это имя
-    - внутренний (движковый) идентификатор героя, который НЕ зависит от
-    языка клиента игры, в отличие от m_hero из replay.details.
+    Для каждого игрока предпочитает первый юнит с префиксом Hero.
+    Призывы и другие юниты могут появиться раньше самого героя.
     """
     if events is None:
         if not hasattr(protocol, "decode_replay_tracker_events"):
@@ -172,11 +169,14 @@ def parse_tracker_heroes(archive, protocol, events=None):
         if event.get("_event") != "NNet.Replay.Tracker.SUnitBornEvent":
             continue
         control_player_id = event.get("m_controlPlayerId")
-        if not control_player_id or control_player_id in hero_by_player:
-            # 0 - нейтральный контроллер (не игрок); для уже найденного
-            # игрока берём именно первое (самое раннее) событие - это и есть герой.
+        if not control_player_id:
             continue
-        hero_by_player[control_player_id] = dec(event.get("m_unitTypeName"))
+        unit_type = dec(event.get("m_unitTypeName"))
+        if not unit_type:
+            continue
+        previous = hero_by_player.get(control_player_id)
+        if not previous or (not previous.startswith("Hero") and unit_type.startswith("Hero")):
+            hero_by_player[control_player_id] = unit_type
     return hero_by_player
 
 
@@ -209,8 +209,13 @@ def parse_replay(path):
         return b.decode("utf-8", errors="replace") if isinstance(b, bytes) else b
 
     try:
-        events = list(protocol.decode_replay_tracker_events(archive.read_file("replay.tracker.events")))
+        tracker_contents = archive.read_file("replay.tracker.events")
+        events = list(protocol.decode_replay_tracker_events(tracker_contents)) if tracker_contents else []
     except (KeyError, AttributeError):
+        events = []
+    except (CorruptedError, TruncatedError) as exc:
+        log.warning("Не удалось разобрать события реплея версии %s, использую данные о матче: %s",
+                    base_build, exc)
         events = []
     hero_by_control_player_id = parse_tracker_heroes(archive, protocol, events)
     talents_chosen, talents_final = talent_builds.collect_talents(events)
@@ -548,7 +553,8 @@ def setup_build_command(config, config_path, bot, messages=None):
         hero_dict = heroes.HeroDict(heroes.load_heroes(
             Path(config_path).resolve().parent / config["orders_heroes_file"]))
         store = talent_builds.BuildStore(
-            Path(config_path).resolve().parent / config["talent_data_file"], hero_dict, messages)
+            Path(config_path).resolve().parent / config["talent_data_file"], hero_dict, messages,
+            catalog_loader=fetch_catalog)
     except (OSError, ValueError, KeyError) as exc:
         log.error("Команда билда отключена: %s", exc)
         return None
